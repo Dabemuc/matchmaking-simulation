@@ -1,0 +1,22 @@
+{
+  "id": null,
+  "title": "Harness Metrics",
+  "tags": [],
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Active Players",
+      "targets": [{ "expr": "active_players", "legendFormat": "{{instance}}" }]
+    },
+    {
+      "type": "graph",
+      "title": "Scenarios In Flight",
+      "targets": [
+        { "expr": "scenarios_in_flight", "legendFormat": "{{scenario}}" }
+      ]
+    }
+  ],
+  "schemaVersion": 30,
+  "version": 1
+}
