@@ -1,0 +1,56 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam linetype polyline
+skinparam defaultTextAlignment center
+skinparam componentSpacing 80
+skinparam packageTitleFontSize 20
+skinparam packagePadding 60
+
+package "Clients" {
+  component "Load Test Harness" as LoadTest
+}
+package "Backend" {
+    package "API Layer" {
+      component "Client API" as ClientAPI
+      component "Postgres DB" as Postgres
+    }
+
+    package "Matchmaking Layer" {
+      component "Matchmaking Service" as Matchmaking
+      component "Dind Provisioner" as DindProv
+
+      package "Game Servers (provisioned in dind)" as GameServers {
+        component "Game Server A" as GS1
+        component "Game Server B" as GS2
+      }
+    }
+}
+
+package "Telemetry & Monitoring" {
+  component "OpenTelemetry Collector" as OTel
+  component "Prometheus" as Prometheus
+  component "Grafana" as Grafana
+}
+
+' ---------------- Connections ----------------
+LoadTest --> ClientAPI : "REST (player actions)"
+ClientAPI --> Postgres : "SQL (update/read player)"
+Matchmaking --> Postgres : "SQL (queued players)"
+Matchmaking --> ClientAPI : "update player status"
+
+Matchmaking --> DindProv : "Provision request"
+DindProv --> GS1 : "docker run"
+DindProv ---> GS2 : "docker run"
+DindProv --> Matchmaking : "Server address"
+LoadTest --> GS1 : "connect"
+LoadTest --> GS2 : "connect"
+
+ClientAPI --> OTel : "metrics"
+Matchmaking --> OTel : "metrics"
+DindProv --> OTel : "metrics"
+GS1 --> OTel : "metrics"
+GS2 ---> OTel : "metrics"
+OTel --> Prometheus : "export"
+Prometheus --> Grafana : "dashboards"
+
+@enduml

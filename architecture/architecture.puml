@@ -1,0 +1,81 @@
+@startuml
+skinparam componentStyle rectangle
+
+package "docker-compose network" {
+  component "Load Test Harness\n(go)" as LoadTest
+  component "Players API\n(go)" as PlayersAPI
+  component "Matchmaking Service\n(go)" as Matchmaking
+  component "Dind Provisioner\n(go) + Docker-in-Docker" as DindProv
+  component "Postgres DB" as Postgres
+
+  folder "Game Servers (provisioned in dind)" {
+    component "Game Server Container A" as GS1
+    component "Game Server Container B" as GS2
+  }
+
+  package "Telemetry & Monitoring" {
+    component "OpenTelemetry Collector" as OTel
+    component "Prometheus" as Prometheus
+    component "Grafana" as Grafana
+  }
+}
+
+' Interactions
+LoadTest --> PlayersAPI : "REST API (player actions, polling)"
+PlayersAPI --> Postgres : "SQL (update player status, read/write)"
+Matchmaking --> Postgres : "SQL (query queued players)"
+Matchmaking --> DindProv : "Provision request (create game server)"
+DindProv --> GS1 : "docker run (containerized game servers)"
+DindProv --> Matchmaking : "Provision result (game server IP:port)"
+Matchmaking --> Postgres : "write match + server address"
+Matchmaking --> PlayersAPI : "notify players (push / update status)"
+LoadTest --> GS1 : "connect to game server (simulate player connection)"
+LoadTest --> GS2 : "connect to game server"
+PlayersAPI --> LoadTest : "responses / long-poll / websocket"
+
+' Metrics flow
+LoadTest --> OTel : "OTLP metrics & traces (SDK)"
+PlayersAPI --> OTel : "OTLP metrics & traces"
+Matchmaking --> OTel : "OTLP metrics & traces"
+DindProv --> OTel : "OTLP metrics & traces"
+GS1 --> OTel : "OTLP metrics & traces"
+GS2 --> OTel : "OTLP metrics & traces"
+OTel --> Prometheus : "export / Prometheus receiver"
+Prometheus --> Grafana : "query metrics (dashboards)"
+
+' Notes
+note right of OTel
+  Run the OpenTelemetry Collector in Docker.
+  Collector aggregates/batches and exports to Prometheus.
+  Services use OTLP (gRPC/HTTP) or StatsD to the Collector.
+end note
+
+note right of DindProv
+  Dind Provisioner talks to Docker daemon inside the dind container.
+  It can use the Docker SDK for Go; provisioned game servers run as sibling containers.
+end note
+
+note left of Postgres
+  Use Postgres with a persistent volume.
+  Tables: players, parties, matches.
+end note
+
+note bottom of PlayersAPI
+  Use WebSocket or Server-Sent Events for push notifications to players,
+  or rely on player polling loops from the load test harness.
+end note
+
+' Represent docker-compose intent
+'component "docker-compose.yml" as Compose
+'Compose ..> LoadTest
+'Compose ..> PlayersAPI
+'Compose ..> Matchmaking
+'Compose ..> DindProv
+'Compose ..> Postgres
+'Compose ..> OTel
+'Compose ..> Prometheus
+'Compose ..> Grafana
+'Compose ..> GS1
+'Compose ..> GS2
+
+@enduml
