@@ -8,6 +8,7 @@ import (
 
 type Scenario interface {
 	Run(ctx context.Context, p *Player) error
+	Name() string
 }
 
 type LoginScenario struct{}
@@ -18,6 +19,10 @@ func (LoginScenario) Run(ctx context.Context, p *Player) error {
 	return sleepOrCancel(ctx, 300*time.Millisecond)
 }
 
+func (LoginScenario) Name() string {
+	return "login"
+}
+
 type MatchmakingScenario struct{}
 
 func (MatchmakingScenario) Run(ctx context.Context, p *Player) error {
@@ -26,12 +31,20 @@ func (MatchmakingScenario) Run(ctx context.Context, p *Player) error {
 	return sleepOrCancel(ctx, 500*time.Millisecond)
 }
 
+func (MatchmakingScenario) Name() string {
+	return "matchmaking"
+}
+
 type StorePurchaseScenario struct{}
 
 func (StorePurchaseScenario) Run(ctx context.Context, p *Player) error {
 	fmt.Printf("[player %d] store purchase\n", p.id)
 	// TODO: store backend calls
 	return sleepOrCancel(ctx, 400*time.Millisecond)
+}
+
+func (StorePurchaseScenario) Name() string {
+	return "store_purchase"
 }
 
 func sleepOrCancel(ctx context.Context, d time.Duration) error {

@@ -2,6 +2,7 @@ package pool
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -26,6 +27,7 @@ func (c *Compositor) AddScenario(s Scenario, perPlayerRate float64) {
 		scenario: s,
 		rate:     perPlayerRate,
 	})
+	compositorDesiredRate.WithLabelValues(s.Name()).Set(perPlayerRate)
 }
 
 func (c *Compositor) Start(ctx context.Context) {
@@ -42,6 +44,7 @@ func (c *Compositor) run(ctx context.Context, entry scenarioEntry) {
 	for {
 		select {
 		case <-ticker.C:
+			tickStart := time.Now()
 			playerCount := c.pool.PlayerCount()
 			if playerCount == 0 {
 				continue
@@ -49,10 +52,19 @@ func (c *Compositor) run(ctx context.Context, entry scenarioEntry) {
 
 			// total executions per second
 			executions := int(float64(playerCount) * entry.rate)
+			compositorTickExecutions.WithLabelValues(entry.scenario.Name()).Observe(float64(executions))
 
 			for i := 0; i < executions; i++ {
-				go c.pool.ExecuteScenario(ctx, entry.scenario)
+				err := c.pool.ExecuteScenario(ctx, entry.scenario)
+				if err != nil {
+					if errors.Is(err, ErrNoPlayerAvailable) {
+						compositorIdleStarvationTotal.WithLabelValues(entry.scenario.Name()).Inc()
+					} else {
+						errorsTotal.WithLabelValues("compositor", "execute_scenario").Inc()
+					}
+				}
 			}
+			tickDuration.WithLabelValues("compositor").Observe(time.Since(tickStart).Seconds())
 
 		case <-ctx.Done():
 			return

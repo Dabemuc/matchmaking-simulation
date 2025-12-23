@@ -12,7 +12,6 @@ import (
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	// Start metrics endpoint
 	go func() {
@@ -23,7 +22,7 @@ func main() {
 
 	time.Sleep(1 * time.Second)
 
-	p := pool.New(1000*time.Millisecond, 1000)
+	p := pool.New(100*time.Millisecond, 1000)
 	p.Init(ctx)
 
 	compositor := pool.NewCompositor(p)

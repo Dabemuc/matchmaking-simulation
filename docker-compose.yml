@@ -4,10 +4,10 @@ services:
     container_name: harness
     ports:
       - "9464:9464" # metrics endpoint
-    restart: unless-stopped
     depends_on: [prometheus, grafana]
     networks:
       - monitoring
+    # restart: unless-stopped
 
   prometheus:
     image: prom/prometheus:latest
