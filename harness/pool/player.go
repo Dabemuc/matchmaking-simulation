@@ -12,27 +12,24 @@ type Player struct {
 	id        int
 	scenario  chan Scenario
 	playerCnt *int64
-	cancel    context.CancelFunc // Add cancel function for player's context
+	cancel    context.CancelFunc
 }
 
 func newPlayer(id int, playerCnt *int64, cancel context.CancelFunc) *Player {
 	playersTotal.Inc()
-	playersActive.Inc()
 	return &Player{
 		id:        id,
 		scenario:  make(chan Scenario),
 		playerCnt: playerCnt,
-		cancel:    cancel, // Assign the cancel function
+		cancel:    cancel,
 	}
 }
 
 func (p *Player) run(ctx context.Context, idle chan *Player) {
-	// ---- PLAYER INITIALIZATION ----
+	// ---- PLAYER SHUTDOWN ----
 	defer func() {
 		atomic.AddInt64(p.playerCnt, -1)
-		playersActive.Dec()
 	}()
-	fmt.Printf("[player %d] starting up\n", p.id)
 
 	// Every player must login before becoming idle
 	login := LoginScenario{}
@@ -45,38 +42,52 @@ func (p *Player) run(ctx context.Context, idle chan *Player) {
 	playerLoginDuration.Observe(time.Since(loginStart).Seconds())
 	playerLoginTotal.WithLabelValues("success").Inc()
 
-	fmt.Printf("[player %d] login successful, entering idle pool\n", p.id)
-
 	// ---- NORMAL PLAYER LOOP ----
 	for {
-		// mark player idle
+		// Priority check: exit immediately if context is already done
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		// 1. Enter Idle State
 		select {
 		case idle <- p:
+			// Successfully entered idle queue
 		case <-ctx.Done():
-			contextCancellationsTotal.WithLabelValues("player").Inc()
+			contextCancellationsTotal.WithLabelValues("player_idle_wait").Inc()
 			return
 		}
 
-		// wait for scenario
+		// 2. Wait for Scenario assignment
 		select {
-		case s := <-p.scenario:
+		case s, ok := <-p.scenario:
+			if !ok {
+				return
+			}
 			scenariosInFlight.WithLabelValues(s.Name()).Inc()
 			scenarioStartedTotal.WithLabelValues(s.Name()).Inc()
+
 			scenarioStart := time.Now()
 			err := s.Run(ctx, p)
-			scenarioDuration.WithLabelValues(s.Name()).Observe(time.Since(scenarioStart).Seconds())
+			duration := time.Since(scenarioStart).Seconds()
+			scenarioDuration.WithLabelValues(s.Name()).Observe(duration)
+
 			if err != nil {
-				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				if errors.Is(err, context.Canceled) {
 					scenarioCompletedTotal.WithLabelValues(s.Name(), "cancelled").Inc()
-				} else {
-					scenarioCompletedTotal.WithLabelValues(s.Name(), "failure").Inc()
+					scenariosInFlight.WithLabelValues(s.Name()).Dec()
+					return // Player context was cancelled (Logout)
 				}
+				scenarioCompletedTotal.WithLabelValues(s.Name(), "failure").Inc()
 			} else {
 				scenarioCompletedTotal.WithLabelValues(s.Name(), "success").Inc()
 			}
 			scenariosInFlight.WithLabelValues(s.Name()).Dec()
+
 		case <-ctx.Done():
-			contextCancellationsTotal.WithLabelValues("player").Inc()
+			contextCancellationsTotal.WithLabelValues("player_scenario_wait").Inc()
 			return
 		}
 	}

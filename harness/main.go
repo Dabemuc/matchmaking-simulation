@@ -9,8 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"harness/pool"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -27,15 +28,23 @@ func main() {
 		http.ListenAndServe(":9464", nil)
 	}()
 
+	// Allow metrics to initialize
 	time.Sleep(1 * time.Second)
 
-	p := pool.New(100*time.Millisecond, 100)
+	// CONFIGURATION:
+	// Target 100 active players.
+	// Rate limit creation to 10ms (100 players/sec max churn).
+	targetPlayers := 100
+	creationRate := 10 * time.Millisecond
+
+	p := pool.New(creationRate, targetPlayers)
 	p.Init(ctx)
 
 	compositor := pool.NewCompositor(p)
-	compositor.AddScenario(pool.MatchmakingScenario{}, 0.05)
-	compositor.AddScenario(pool.StorePurchaseScenario{}, 0.02)
-	compositor.AddScenario(pool.LogoutScenario{}, 0.05)
+	// Scenarios defined as executions per second PER PLAYER
+	compositor.AddScenario(pool.MatchmakingScenario{}, 0.05)   // 1 every 20s per player
+	compositor.AddScenario(pool.StorePurchaseScenario{}, 0.02) // 1 every 50s per player
+	compositor.AddScenario(pool.LogoutScenario{}, 0.01)        // 1% chance per second to logout (churn)
 	compositor.Start(ctx)
 
 	// Wait for a signal to stop
