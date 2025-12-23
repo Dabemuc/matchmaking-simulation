@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -12,6 +15,10 @@ import (
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	// Set up channel for listening to OS signals
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	// Start metrics endpoint
 	go func() {
@@ -30,7 +37,9 @@ func main() {
 	compositor.AddScenario(pool.StorePurchaseScenario{}, 0.02)
 	compositor.Start(ctx)
 
-	time.Sleep(20 * time.Second)
+	// Wait for a signal to stop
+	<-stop
+	fmt.Println("\nShutting down...")
 	cancel()
 	time.Sleep(1 * time.Second)
 }
