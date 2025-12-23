@@ -47,6 +47,20 @@ func (StorePurchaseScenario) Name() string {
 	return "store_purchase"
 }
 
+// LogoutScenario causes a player to log out by canceling its context.
+type LogoutScenario struct{}
+
+func (LogoutScenario) Run(ctx context.Context, p *Player) error {
+	fmt.Printf("[player %d] logging out\n", p.id)
+	// Call the player's cancel function to terminate its run goroutine.
+	p.cancel()
+	return nil
+}
+
+func (LogoutScenario) Name() string {
+	return "logout"
+}
+
 func sleepOrCancel(ctx context.Context, d time.Duration) error {
 	select {
 	case <-time.After(d):

@@ -29,12 +29,13 @@ func main() {
 
 	time.Sleep(1 * time.Second)
 
-	p := pool.New(100*time.Millisecond, 1000)
+	p := pool.New(100*time.Millisecond, 100)
 	p.Init(ctx)
 
 	compositor := pool.NewCompositor(p)
-	compositor.AddScenario(pool.MatchmakingScenario{}, 0.1)
+	compositor.AddScenario(pool.MatchmakingScenario{}, 0.05)
 	compositor.AddScenario(pool.StorePurchaseScenario{}, 0.02)
+	compositor.AddScenario(pool.LogoutScenario{}, 0.05)
 	compositor.Start(ctx)
 
 	// Wait for a signal to stop

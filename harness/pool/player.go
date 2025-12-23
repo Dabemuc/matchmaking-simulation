@@ -12,15 +12,17 @@ type Player struct {
 	id        int
 	scenario  chan Scenario
 	playerCnt *int64
+	cancel    context.CancelFunc // Add cancel function for player's context
 }
 
-func newPlayer(id int, playerCnt *int64) *Player {
+func newPlayer(id int, playerCnt *int64, cancel context.CancelFunc) *Player {
 	playersTotal.Inc()
 	playersActive.Inc()
 	return &Player{
 		id:        id,
 		scenario:  make(chan Scenario),
 		playerCnt: playerCnt,
+		cancel:    cancel, // Assign the cancel function
 	}
 }
 

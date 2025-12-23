@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -15,6 +16,9 @@ type Pool struct {
 	rate      time.Duration
 	nextID    int
 	playerCnt int64
+	// A map to keep track of active players and their cancel functions.
+	// This allows the LogoutScenario to trigger the cancellation of a specific player.
+	activePlayers sync.Map // map[int]context.CancelFunc
 }
 
 func New(rate time.Duration, idleCapacity int) *Pool {
@@ -22,6 +26,7 @@ func New(rate time.Duration, idleCapacity int) *Pool {
 	return &Pool{
 		idle: make(chan *Player, idleCapacity),
 		rate: rate,
+		activePlayers: sync.Map{},
 	}
 }
 
@@ -39,6 +44,7 @@ func (p *Pool) monitor(ctx context.Context) {
 		}
 	}
 }
+
 func (p *Pool) Init(ctx context.Context) {
 	ticker := time.NewTicker(p.rate)
 	go p.monitor(ctx)
@@ -49,10 +55,25 @@ func (p *Pool) Init(ctx context.Context) {
 			select {
 			case <-ticker.C:
 				tickStart := time.Now()
-				player := newPlayer(p.nextID, &p.playerCnt)
+
+				// Saturation Logic: Only create a new player if the idle channel is not full.
+				if len(p.idle) == cap(p.idle) {
+					// fmt.Printf("Pool saturated, skipping player creation. Idle: %d/%d\n", len(p.idle), cap(p.idle))
+					continue
+				}
+
+				playerCtx, playerCancel := context.WithCancel(ctx)
+				playerID := p.nextID
+				player := newPlayer(playerID, &p.playerCnt, playerCancel)
 				p.nextID++
 				atomic.AddInt64(&p.playerCnt, 1)
-				go player.run(ctx, p.idle)
+				p.activePlayers.Store(playerID, playerCancel) // Store the cancel function
+
+				go func() {
+					player.run(playerCtx, p.idle)
+					// When player.run exits, remove its cancel function from the map
+					p.activePlayers.Delete(playerID)
+				}()
 				tickDuration.WithLabelValues("pool").Observe(time.Since(tickStart).Seconds())
 
 			case <-ctx.Done():
