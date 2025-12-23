@@ -32,9 +32,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 
 	// CONFIGURATION:
-	// Target 100 active players.
-	// Rate limit creation to 10ms (100 players/sec max churn).
-	targetPlayers := 100
+	targetPlayers := 10000
 	creationRate := 10 * time.Millisecond
 
 	p := pool.New(creationRate, targetPlayers)
@@ -42,9 +40,12 @@ func main() {
 
 	compositor := pool.NewCompositor(p)
 	// Scenarios defined as executions per second PER PLAYER
-	compositor.AddScenario(pool.MatchmakingScenario{}, 0.05)   // 1 every 20s per player
-	compositor.AddScenario(pool.StorePurchaseScenario{}, 0.02) // 1 every 50s per player
-	compositor.AddScenario(pool.LogoutScenario{}, 0.01)        // 1% chance per second to logout (churn)
+	// Matchmaking: Average of 1 minute between attempts
+	compositor.AddScenario(pool.MatchmakingScenario{}, 1.0/60.0)
+	// Store Purchase: Average of 2 hours between purchases
+	compositor.AddScenario(pool.StorePurchaseScenario{}, 1.0/7200.0)
+	// Logout: Average session length of 15 minutes
+	compositor.AddScenario(pool.LogoutScenario{}, 1.0/900.0)
 	compositor.Start(ctx)
 
 	// Wait for a signal to stop

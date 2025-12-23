@@ -26,7 +26,7 @@
       "type": "timeseries",
       "interval": "0.25s",
       "description": "Displays the number of active Go routines and OS-level threads. A steady upward trend in Goroutines indicates a leak. A spike in OS Threads suggests the harness is hitting blocking I/O (system calls/network) rather than Go-level concurrency limits.",
-      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 1 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 1 },
       "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         { "expr": "go_goroutines", "legendFormat": "Goroutines" },
@@ -39,7 +39,7 @@
       "type": "timeseries",
       "interval": "0.25s",
       "description": "Compares total alive players vs. players currently executing a scenario. If 'Busy' stays equal to 'Active', your player pool is 100% saturated and you cannot execute more scenarios without increasing the player count.",
-      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 1 },
       "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         { "expr": "harness_players_active", "legendFormat": "Active Players" },
@@ -51,20 +51,73 @@
       "fieldConfig": { "defaults": { "min": 0 } }
     },
     {
-      "title": "System Resources (Harness)",
+      "title": "CPU Usage",
       "type": "timeseries",
       "interval": "0.25s",
-      "description": "Monitors the harness's own footprint. If CPU hits 100% or RAM (RSS) grows indefinitely, the harness itself is bottlenecking the test, which can lead to artificial latency in your scenario results.",
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
+      "description": "Historical CPU usage relative to the GOMAXPROCS limit. If the line crosses the Hard Limit, the Go runtime is fully saturated.",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 2 },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total[1m]) / scalar(go_sched_gomaxprocs_threads)",
+          "legendFormat": "Actual Usage (Ratio)"
+        },
+        {
+          "expr": "vector(1)",
+          "legendFormat": "Hard Limit (${max_procs} Cores)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1.2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 0.8 },
+              { "color": "red", "value": 1.0 }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hard Limit (${max_procs} Cores)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": { "fixedColor": "red", "mode": "fixed" }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": { "dash": [5, 5], "fill": "solid" }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title": "Memory",
+      "type": "timeseries",
+      "interval": "0.25s",
+      "description": "Compares Heap Alloc (Go managed) vs Resident Set Size (OS managed). A widening gap suggests memory fragmentation or non-heap overhead.",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 2 },
       "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "expr": "rate(process_cpu_seconds_total[1m]) * 100",
-          "legendFormat": "CPU Usage %"
+          "expr": "go_memstats_heap_alloc_bytes",
+          "legendFormat": "Heap Alloc"
         },
-        { "expr": "process_resident_memory_bytes", "legendFormat": "RAM (RSS)" }
+        { "expr": "process_resident_memory_bytes", "legendFormat": "Total RSS" }
       ],
-      "fieldConfig": { "defaults": { "min": 0 } }
+      "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 } }
     },
     {
       "title": "Bottleneck Analysis",
@@ -186,7 +239,34 @@
       "fieldConfig": { "defaults": { "unit": "s", "min": 0 } }
     }
   ],
+  "refresh": "5s",
   "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "definition": "query_result(go_sched_gomaxprocs_threads)",
+        "hide": 2,
+        "name": "max_procs",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(go_sched_gomaxprocs_threads)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "/\\} (\\d+)/",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
   "timezone": "browser",
   "title": "Harness Overview V2"
 }

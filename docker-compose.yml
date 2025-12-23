@@ -4,6 +4,13 @@ services:
     container_name: harness
     ports:
       - "9464:9464" # metrics endpoint
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0" # Limit to exactly 2 cores
+          memory: 512M # Optional: limit memory too
+    environment:
+      - GOMAXPROCS=4 # Limit to 4 Processes
     depends_on: [prometheus, grafana]
     networks:
       - monitoring
