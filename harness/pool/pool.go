@@ -2,6 +2,7 @@ package pool
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -24,13 +25,14 @@ func (p *Pool) Init(ctx context.Context) {
 
 	go func() {
 		defer ticker.Stop()
-
 		for {
 			select {
 			case <-ticker.C:
 				player := newPlayer(p.nextID)
 				p.nextID++
 				p.playerCnt++
+
+				activePlayers.Set(float64(p.playerCnt))
 
 				go player.run(ctx, p.idle)
 
@@ -46,6 +48,7 @@ func (p *Pool) ExecuteScenario(ctx context.Context, s Scenario) error {
 	case player := <-p.idle:
 		select {
 		case player.scenario <- s:
+			scenarioExecutions.WithLabelValues(fmt.Sprintf("%T", s)).Inc()
 			return nil
 		case <-ctx.Done():
 			return ctx.Err()
