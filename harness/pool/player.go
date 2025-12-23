@@ -2,27 +2,34 @@ package pool
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync/atomic"
 	"time"
 )
 
 type Player struct {
-	id       int
-	scenario chan Scenario
+	id        int
+	scenario  chan Scenario
+	playerCnt *int64
 }
 
-func newPlayer(id int) *Player {
+func newPlayer(id int, playerCnt *int64) *Player {
 	playersTotal.Inc()
 	playersActive.Inc()
 	return &Player{
-		id:       id,
-		scenario: make(chan Scenario),
+		id:        id,
+		scenario:  make(chan Scenario),
+		playerCnt: playerCnt,
 	}
 }
 
 func (p *Player) run(ctx context.Context, idle chan *Player) {
 	// ---- PLAYER INITIALIZATION ----
-	defer playersActive.Dec()
+	defer func() {
+		atomic.AddInt64(p.playerCnt, -1)
+		playersActive.Dec()
+	}()
 	fmt.Printf("[player %d] starting up\n", p.id)
 
 	// Every player must login before becoming idle
@@ -43,7 +50,6 @@ func (p *Player) run(ctx context.Context, idle chan *Player) {
 		// mark player idle
 		select {
 		case idle <- p:
-			playersIdle.Inc()
 		case <-ctx.Done():
 			contextCancellationsTotal.WithLabelValues("player").Inc()
 			return
@@ -58,7 +64,11 @@ func (p *Player) run(ctx context.Context, idle chan *Player) {
 			err := s.Run(ctx, p)
 			scenarioDuration.WithLabelValues(s.Name()).Observe(time.Since(scenarioStart).Seconds())
 			if err != nil {
-				scenarioCompletedTotal.WithLabelValues(s.Name(), "failure").Inc()
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					scenarioCompletedTotal.WithLabelValues(s.Name(), "cancelled").Inc()
+				} else {
+					scenarioCompletedTotal.WithLabelValues(s.Name(), "failure").Inc()
+				}
 			} else {
 				scenarioCompletedTotal.WithLabelValues(s.Name(), "success").Inc()
 			}

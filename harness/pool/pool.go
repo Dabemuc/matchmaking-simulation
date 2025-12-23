@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"runtime"
+	"sync/atomic"
 	"time"
 )
 
@@ -13,10 +14,11 @@ type Pool struct {
 	idle      chan *Player
 	rate      time.Duration
 	nextID    int
-	playerCnt int
+	playerCnt int64
 }
 
 func New(rate time.Duration, idleCapacity int) *Pool {
+	poolIdleCapacity.Set(float64(idleCapacity))
 	return &Pool{
 		idle: make(chan *Player, idleCapacity),
 		rate: rate,
@@ -47,9 +49,9 @@ func (p *Pool) Init(ctx context.Context) {
 			select {
 			case <-ticker.C:
 				tickStart := time.Now()
-				player := newPlayer(p.nextID)
+				player := newPlayer(p.nextID, &p.playerCnt)
 				p.nextID++
-				p.playerCnt++
+				atomic.AddInt64(&p.playerCnt, 1)
 				go player.run(ctx, p.idle)
 				tickDuration.WithLabelValues("pool").Observe(time.Since(tickStart).Seconds())
 
@@ -66,7 +68,6 @@ func (p *Pool) ExecuteScenario(ctx context.Context, s Scenario) error {
 	select {
 	case player := <-p.idle:
 		poolExecuteWaitDuration.Observe(time.Since(waitStart).Seconds())
-		playersIdle.Dec()
 		select {
 		case player.scenario <- s:
 			return nil
@@ -83,5 +84,5 @@ func (p *Pool) ExecuteScenario(ctx context.Context, s Scenario) error {
 }
 
 func (p *Pool) PlayerCount() int {
-	return p.playerCnt
+	return int(atomic.LoadInt64(&p.playerCnt))
 }

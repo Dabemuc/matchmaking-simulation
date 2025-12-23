@@ -43,8 +43,11 @@ func (c *Compositor) run(ctx context.Context, entry scenarioEntry) {
 
 	for {
 		select {
-		case <-ticker.C:
+		case tickTime := <-ticker.C:
 			tickStart := time.Now()
+			lag := tickStart.Sub(tickTime).Seconds()
+			compositorTickLagSeconds.WithLabelValues(entry.scenario.Name()).Set(lag)
+
 			playerCount := c.pool.PlayerCount()
 			if playerCount == 0 {
 				continue
@@ -55,6 +58,7 @@ func (c *Compositor) run(ctx context.Context, entry scenarioEntry) {
 			compositorTickExecutions.WithLabelValues(entry.scenario.Name()).Observe(float64(executions))
 
 			for i := 0; i < executions; i++ {
+				scenarioAttemptedTotal.WithLabelValues(entry.scenario.Name()).Inc()
 				err := c.pool.ExecuteScenario(ctx, entry.scenario)
 				if err != nil {
 					if errors.Is(err, ErrNoPlayerAvailable) {

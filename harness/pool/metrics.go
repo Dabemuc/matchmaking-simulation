@@ -21,13 +21,6 @@ var (
 			Help:      "Current number of alive players.",
 		},
 	)
-	playersIdle = promauto.NewGauge(
-		prometheus.GaugeOpts{
-			Namespace: "harness",
-			Name:      "players_idle",
-			Help:      "Players currently idle and available for scenarios.",
-		},
-	)
 	playerLoginTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "harness",
@@ -46,6 +39,14 @@ var (
 	)
 
 	// 2️⃣ Scenario execution metrics
+	scenarioAttemptedTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "harness",
+			Name:      "scenario_attempted_total",
+			Help:      "Scenario executions requested by compositor.",
+		},
+		[]string{"scenario"},
+	)
 	scenarioStartedTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "harness",
@@ -106,8 +107,23 @@ var (
 		},
 		[]string{"scenario"},
 	)
+	compositorTickLagSeconds = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "harness",
+			Name:      "compositor_tick_lag_seconds",
+			Help:      "Lag between compositor's desired tick time and actual tick time.",
+		},
+		[]string{"scenario"},
+	)
 
 	// 4️⃣ Pool pressure & backpressure
+	poolIdleCapacity = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: "harness",
+			Name:      "pool_idle_capacity",
+			Help:      "Maximum idle pool capacity.",
+		},
+	)
 	poolExecuteWaitDuration = promauto.NewHistogram(
 		prometheus.HistogramOpts{
 			Namespace: "harness",
