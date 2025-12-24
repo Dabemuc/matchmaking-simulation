@@ -15,8 +15,7 @@ type LoginScenario struct{}
 
 func (LoginScenario) Run(ctx context.Context, p *Player) error {
 	fmt.Printf("[player %d] logging in\n", p.id)
-	// TODO: auth backend call
-	return sleepOrCancel(ctx, 300*time.Millisecond)
+	return Login(fmt.Sprintf("player%d", p.id), "password")
 }
 
 func (LoginScenario) Name() string {

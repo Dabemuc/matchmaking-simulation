@@ -2,19 +2,35 @@ services:
   harness:
     build: harness
     container_name: harness
-    ports:
-      - "9464:9464" # metrics endpoint
+    # ports:
+    #   - "9464:9464" # metrics endpoint
     deploy:
       resources:
         limits:
-          cpus: "4.0" # Limit to exactly 2 cores
-          memory: 512M # Optional: limit memory too
+          cpus: "4.0" # Limit cores
+          memory: 512M # limit memory
     environment:
-      - GOMAXPROCS=4 # Limit to 4 Processes
-    depends_on: [prometheus, grafana]
+      - GOMAXPROCS=4 # Limit Go runtime
+      - BACKEND_HOSTNAME=api
+    depends_on: [prometheus, grafana, api]
     networks:
       - monitoring
-    # restart: unless-stopped
+
+  api:
+    build: services/clients_api/
+    container_name: api
+    # ports:
+    #   - "8080:8080" # api endpoint
+    #   - "9464:9464" # metrics endpoint
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0" # Limit cores
+          memory: 128M # limit memory
+    environment:
+      - GOMAXPROCS=1 # Limit Go runtime
+    networks:
+      - monitoring
 
   prometheus:
     image: prom/prometheus:latest
@@ -25,7 +41,6 @@ services:
       - "9090:9090"
     networks:
       - monitoring
-    # restart: unless-stopped
 
   grafana:
     image: grafana/grafana:latest
@@ -41,7 +56,6 @@ services:
       - monitoring
     depends_on:
       - prometheus
-    # restart: unless-stopped
 
 networks:
   monitoring:

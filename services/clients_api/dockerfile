@@ -1,0 +1,21 @@
+FROM golang:1.24-alpine
+
+WORKDIR /app
+
+# Copy go.mod and go.sum
+COPY go.mod ./
+RUN go mod download
+
+# Copy the code
+COPY . .
+
+# Build the harness
+RUN go build -o api main.go
+
+# Expose metrics port
+EXPOSE 9464
+
+# Expose api port
+EXPOSE 8080
+
+CMD ["./api"]
