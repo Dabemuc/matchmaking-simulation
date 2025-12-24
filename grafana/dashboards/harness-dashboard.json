@@ -3,12 +3,9 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": {
-          "uid": "-- Grafana --"
-        },
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
         "enable": true,
         "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
       }
@@ -16,1538 +13,261 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "id": 2,
+  "graphTooltip": 1,
   "links": [],
   "panels": [
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 100,
-      "panels": [],
-      "title": "System Overview",
-      "type": "row"
+      "title": "Vitals",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 1
-      },
-      "id": 102,
+      "title": "Goroutines & Threads",
+      "type": "timeseries",
       "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
+      "description": "Displays the number of active Go routines and OS-level threads. A steady upward trend in Goroutines indicates a leak. A spike in OS Threads suggests the harness is hitting blocking I/O (system calls/network) rather than Go-level concurrency limits.",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 1 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "harness_players_active",
-          "legendFormat": "Active Players",
-          "refId": "A"
-        }
+          "expr": "go_goroutines{job=\"harness\"}",
+          "legendFormat": "Goroutines"
+        },
+        { "expr": "go_threads{job=\"harness\"}", "legendFormat": "OS Threads" }
       ],
-      "title": "Active Players",
-      "type": "timeseries"
+      "fieldConfig": { "defaults": { "min": 0 } }
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 1
-      },
-      "id": 104,
+      "title": "Active Players & Concurrency",
+      "type": "timeseries",
       "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
+      "description": "Compares total alive players vs. players currently executing a scenario. If 'Busy' stays equal to 'Active', your player pool is 100% saturated and you cannot execute more scenarios without increasing the player count.",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 1 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "rate(harness_players_total[5s])",
-          "legendFormat": "Player Creation Rate",
-          "refId": "A"
+          "expr": "harness_players_active{job=\"harness\"}",
+          "legendFormat": "Active Players"
+        },
+        {
+          "expr": "sum(harness_scenarios_in_flight{job=\"harness\"})",
+          "legendFormat": "Busy Players (In-Flight)"
         }
       ],
-      "title": "Player Creation Rate",
-      "type": "timeseries"
+      "fieldConfig": { "defaults": { "min": 0 } }
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
-      },
-      "id": 106,
-      "panels": [],
-      "title": "Pool Health",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 10
-      },
-      "id": 108,
+      "title": "CPU Usage",
+      "type": "timeseries",
       "interval": "0.25s",
+      "description": "Historical CPU usage relative to the GOMAXPROCS limit. If the line crosses the Hard Limit, the Go runtime is fully saturated.",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 2 },
       "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
+        "tooltip": { "mode": "multi", "sort": "none" }
       },
-      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "harness_pool_idle_queue_depth",
-          "legendFormat": "Idle Pool Depth",
-          "refId": "A"
+          "expr": "rate(process_cpu_seconds_total{job=\"harness\"}[1m]) / scalar(go_sched_gomaxprocs_threads{job=\"harness\"})",
+          "legendFormat": "Actual Usage (Ratio)"
+        },
+        {
+          "expr": "vector(1)",
+          "legendFormat": "Hard Limit (${max_procs} Cores)"
         }
       ],
-      "title": "Idle Pool Depth",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "max": 1,
+          "unit": "percentunit",
           "min": 0,
+          "max": 1.2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 0.8 },
+              { "color": "red", "value": 1.0 }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hard Limit (${max_procs} Cores)"
+            },
+            "properties": [
               {
-                "color": "green",
-                "value": 0
+                "id": "color",
+                "value": { "fixedColor": "red", "mode": "fixed" }
               },
               {
-                "color": "red",
-                "value": 80
+                "id": "custom.lineStyle",
+                "value": { "dash": [5, 5], "fill": "solid" }
               }
             ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 10
-      },
-      "id": 110,
+          }
+        ]
+      }
+    },
+    {
+      "title": "Memory",
+      "type": "timeseries",
       "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
+      "description": "Compares Heap Alloc (Go managed) vs Resident Set Size (OS managed). A widening gap suggests memory fragmentation or non-heap overhead.",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 2 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "harness_pool_idle_queue_depth / harness_pool_idle_capacity",
-          "legendFormat": "Idle Saturation",
-          "refId": "A"
+          "expr": "go_memstats_heap_alloc_bytes{job=\"harness\"}",
+          "legendFormat": "Heap Alloc"
+        },
+        {
+          "expr": "process_resident_memory_bytes{job=\"harness\"}",
+          "legendFormat": "Total RSS"
         }
       ],
-      "title": "Idle Saturation",
-      "type": "timeseries"
+      "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 } }
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 112,
-      "panels": [],
-      "title": "Errors",
-      "type": "row"
+      "title": "Bottleneck Analysis",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 }
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
+      "title": "Player Wait Time (Pool Starvation)",
+      "type": "timeseries",
+      "interval": "0.25s",
+      "description": "The time a scenario spends in the queue waiting for an idle player. Any value above 0ms indicates 'Starvation'. High wait times mean your Compositor is requesting work faster than your player pool can process it.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(harness_pool_execute_wait_duration_seconds_bucket{job=\"harness\"}[1m]))",
+          "legendFormat": "p99 Wait Time"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(harness_pool_execute_wait_duration_seconds_bucket{job=\"harness\"}[1m]))",
+          "legendFormat": "p50 Wait Time"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "min": 0 } }
+    },
+    {
+      "title": "Compositor Health (Tick Lag)",
+      "type": "timeseries",
+      "interval": "0.25s",
+      "description": "Measures the delay between when a simulation 'tick' was supposed to happen and when it actually happened. High lag means the Go runtime is struggling (GC pauses or CPU exhaustion), making the simulation jittery.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [
+        {
+          "expr": "harness_compositor_tick_lag_seconds{job=\"harness\"}",
+          "legendFormat": "Tick Lag: {{scenario}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "min": 0 } }
+    },
+    {
+      "title": "Scenario Performance",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 }
+    },
+    {
+      "title": "Throughput by Status",
+      "type": "timeseries",
+      "interval": "0.25s",
+      "description": "The rate of completed scenarios per second. 'Success' is your happy path. 'Failure' usually indicates application errors (500s). 'Cancelled' shows players logging out or context timeouts during the simulation.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
+      "targets": [
+        {
+          "expr": "rate(harness_scenario_completed_total{job=\"harness\", status=\"success\"}[10s])",
+          "legendFormat": "Success: {{scenario}}"
+        },
+        {
+          "expr": "rate(harness_scenario_completed_total{job=\"harness\", status=\"failure\"}[10s])",
+          "legendFormat": "Failure: {{scenario}}"
+        }
+      ],
       "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 19
-      },
-      "id": 114,
+        "defaults": { "min": 0, "custom": { "stacking": { "mode": "normal" } } }
+      }
+    },
+    {
+      "title": "Execution Latency (p95)",
+      "type": "timeseries",
       "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
+      "description": "The time taken to execute a scenario from start to finish (95th percentile). If this climbs while 'Wait Time' is low, the target system (server under test) is slowing down.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "rate(harness_errors_total[5m])",
-          "legendFormat": "{{component}}: {{reason}}",
-          "refId": "A"
+          "expr": "histogram_quantile(0.95, rate(harness_scenario_duration_seconds_bucket{job=\"harness\"}[1m]))",
+          "legendFormat": "p95: {{scenario}}"
         }
       ],
-      "title": "Internal Errors",
-      "type": "timeseries"
+      "fieldConfig": { "defaults": { "unit": "s", "min": 0 } }
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 27
-      },
-      "id": 116,
-      "panels": [],
-      "title": "Scenario Throughput",
-      "type": "row"
+      "title": "Login & Ramp-up Metrics",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 }
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 28
-      },
-      "id": 122,
+      "title": "Login Success Rate",
+      "type": "timeseries",
       "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
+      "description": "Tracks how many players are successfully logging in per second. Failures here indicate that your authentication service or connection pool is failing before the load test even truly begins.",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 27 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "harness_compositor_desired_rate{scenario=~\"$scenario\"}",
-          "legendFormat": "{{scenario}}",
-          "refId": "A"
+          "expr": "rate(harness_player_login_total{job=\"harness\", status=\"success\"}[1m])",
+          "legendFormat": "Success"
+        },
+        {
+          "expr": "rate(harness_player_login_total{job=\"harness\", status=\"failure\"}[1m])",
+          "legendFormat": "Failure"
         }
       ],
-      "title": "Desired Rate",
-      "type": "timeseries"
+      "fieldConfig": { "defaults": { "min": 0 } }
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 28
-      },
-      "id": 118,
+      "title": "Login Duration (p95)",
+      "type": "timeseries",
       "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
+      "description": "Measures how long it takes for the harness to initialize a new player. High values here during a ramp-up phase suggest that the harness is struggling to open new connections or the auth server is bottlenecked.",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 27 },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "rate(harness_scenario_attempted_total{scenario=~\"$scenario\"}[5s])",
-          "legendFormat": "Attempted: {{scenario}}",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "rate(harness_scenario_started_total{scenario=~\"$scenario\"}[5s])",
-          "legendFormat": "Started: {{scenario}}",
-          "refId": "B"
+          "expr": "histogram_quantile(0.95, rate(harness_player_login_duration_seconds_bucket{job=\"harness\"}[1m]))",
+          "legendFormat": "p95 Login Time"
         }
       ],
-      "title": "Attempted vs Started Rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 28
-      },
-      "id": 120,
-      "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "rate(harness_scenario_completed_total{scenario=~\"$scenario\", status=\"success\"}[5s])",
-          "legendFormat": "Success: {{scenario}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Completion Rate (Success)",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 36
-      },
-      "id": 124,
-      "panels": [],
-      "title": "Scenario Latency",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 37
-      },
-      "id": 126,
-      "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.5, rate(harness_scenario_duration_seconds_bucket{scenario=~\"$scenario\"}[5m]))",
-          "legendFormat": "p50: {{scenario}}",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.95, rate(harness_scenario_duration_seconds_bucket{scenario=~\"$scenario\"}[5m]))",
-          "legendFormat": "p95: {{scenario}}",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.99, rate(harness_scenario_duration_seconds_bucket{scenario=~\"$scenario\"}[5m]))",
-          "legendFormat": "p99: {{scenario}}",
-          "refId": "C"
-        }
-      ],
-      "title": "Scenario Duration",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 45
-      },
-      "id": 128,
-      "panels": [],
-      "title": "Backpressure & Saturation",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 46
-      },
-      "id": 130,
-      "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "rate(harness_compositor_idle_starvation_total{scenario=~\"$scenario\"}[5s])",
-          "legendFormat": "{{scenario}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Idle Starvation Rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 46
-      },
-      "id": 132,
-      "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.95, rate(harness_pool_execute_wait_duration_seconds_bucket[5m]))",
-          "legendFormat": "p95",
-          "refId": "A"
-        }
-      ],
-      "title": "Pool Execute Wait P95",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 54
-      },
-      "id": 134,
-      "panels": [],
-      "title": "Scheduler Health",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 55
-      },
-      "id": 136,
-      "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "editorMode": "builder",
-          "expr": "histogram_quantile(0.95, sum(rate(harness_tick_duration_seconds[$__rate_interval])) by (le))",
-          "legendFormat": "{{component}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Tick Duration",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 55
-      },
-      "id": 138,
-      "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "harness_goroutines",
-          "legendFormat": "Goroutines",
-          "refId": "A"
-        }
-      ],
-      "title": "Goroutines",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 55
-      },
-      "id": 140,
-      "interval": "0.25s",
-      "options": {
-        "alertThreshold": true,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "rate(harness_context_cancellations_total[5m])",
-          "legendFormat": "{{source}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Context Cancellations",
-      "type": "timeseries"
+      "fieldConfig": { "defaults": { "unit": "s", "min": 0 } }
     }
   ],
-  "preload": false,
   "refresh": "5s",
-  "schemaVersion": 42,
-  "tags": [],
+  "schemaVersion": 39,
   "templating": {
     "list": [
       {
-        "allValue": ".*",
-        "current": {},
         "datasource": {
           "type": "prometheus",
           "uid": "PBFA97CFB590B2093"
         },
-        "definition": "label_values(harness_scenarios_in_flight,scenario)",
-        "includeAll": true,
-        "label": "Scenario",
-        "multi": true,
-        "name": "scenario",
+        "definition": "query_result(go_sched_gomaxprocs_threads{job=\"harness\"})",
+        "hide": 2,
+        "name": "max_procs",
         "options": [],
         "query": {
-          "qryType": 1,
-          "query": "label_values(harness_scenarios_in_flight,scenario)",
+          "qryType": 3,
+          "query": "query_result(go_sched_gomaxprocs_threads{job=\"harness\"})",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
-        "regex": "",
+        "regex": "/\\} (\\d+)/",
         "type": "query"
       }
     ]
@@ -1556,9 +276,6 @@
     "from": "now-5m",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "",
-  "title": "Harness Overview",
-  "uid": "harness-overview",
-  "version": 3
+  "timezone": "browser",
+  "title": "Harness Overview"
 }

@@ -21,7 +21,6 @@ services:
     container_name: api
     # ports:
     #   - "8080:8080" # api endpoint
-    #   - "9464:9464" # metrics endpoint
     deploy:
       resources:
         limits:
