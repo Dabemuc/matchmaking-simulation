@@ -10,9 +10,9 @@ RUN go mod download
 COPY . .
 
 # Build
-RUN go build -o clients-api main.go
+RUN go build -o gateway main.go
 
-# Expose api port
+# Expose gateway api port
 EXPOSE 8080
 
-CMD [ "./clients-api" ]
+CMD [ "./gateway" ]

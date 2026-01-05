@@ -8,8 +8,8 @@ import (
 	"os"
 )
 
-func getBackendURL() string {
-	hostname := os.Getenv("BACKEND_HOSTNAME")
+func getGatewayURL() string {
+	hostname := os.Getenv("GATEWAY_HOSTNAME")
 	if hostname == "" {
 		hostname = "localhost"
 	}
@@ -17,7 +17,7 @@ func getBackendURL() string {
 }
 
 func Login(username, password string) error {
-	url := getBackendURL() + "/login"
+	url := getGatewayURL() + "/login"
 	requestBody, err := json.Marshal(map[string]string{
 		"username": username,
 		"password": password,

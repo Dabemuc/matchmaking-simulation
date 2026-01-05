@@ -11,16 +11,16 @@ services:
           memory: 512M # limit memory
     environment:
       - GOMAXPROCS=4 # Limit Go runtime
-      - BACKEND_HOSTNAME=api
-    depends_on: [prometheus, grafana, api]
+      - GATEWAY_HOSTNAME=gateway
+    depends_on: [prometheus, grafana, gateway]
     networks:
       - monitoring
 
-  api:
-    build: services/clients_api/
-    container_name: api
+  gateway:
+    build: services/gateway/
+    container_name: gateway
     # ports:
-    #   - "8080:8080" # api endpoint
+    #   - "8080:8080" # gateway api endpoint
     deploy:
       resources:
         limits:

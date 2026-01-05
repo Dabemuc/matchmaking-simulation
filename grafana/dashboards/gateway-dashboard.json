@@ -34,11 +34,11 @@
       "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "expr": "go_goroutines{job=\"clients_api\"}",
+          "expr": "go_goroutines{job=\"gateway\"}",
           "legendFormat": "Goroutines"
         },
         {
-          "expr": "go_threads{job=\"clients_api\"}",
+          "expr": "go_threads{job=\"gateway\"}",
           "legendFormat": "OS Threads"
         }
       ],
@@ -55,12 +55,12 @@
       },
       "targets": [
         {
-          "expr": "rate(process_cpu_seconds_total{job=\"clients_api\"}[1m]) / scalar(go_sched_gomaxprocs_threads{job=\"clients_api\"})",
+          "expr": "rate(process_cpu_seconds_total{job=\"gateway\"}[1m]) / scalar(go_sched_gomaxprocs_threads{job=\"gateway\"})",
           "legendFormat": "Actual Usage (Ratio)"
         },
         {
           "expr": "vector(1)",
-          "legendFormat": "Hard Limit (${max_procs_clients_api} Cores)"
+          "legendFormat": "Hard Limit (${max_procs_gateway} Cores)"
         }
       ],
       "fieldConfig": {
@@ -81,7 +81,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Hard Limit (${max_procs_clients_api} Cores)"
+              "options": "Hard Limit (${max_procs_gateway} Cores)"
             },
             "properties": [
               {
@@ -106,11 +106,11 @@
       "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
         {
-          "expr": "go_memstats_heap_alloc_bytes{job=\"clients_api\"}",
+          "expr": "go_memstats_heap_alloc_bytes{job=\"gateway\"}",
           "legendFormat": "Heap Alloc"
         },
         {
-          "expr": "process_resident_memory_bytes{job=\"clients_api\"}",
+          "expr": "process_resident_memory_bytes{job=\"gateway\"}",
           "legendFormat": "Total RSS"
         }
       ],
@@ -209,7 +209,7 @@
           "datasource": {
             "uid": "prometheus"
           },
-          "expr": "rate(http_requests_total{job='clients_api'}[1m])",
+          "expr": "rate(http_requests_total{job='gateway'}[1m])",
           "legendFormat": "{{path}} - {{status}}",
           "refId": "A"
         }
@@ -305,7 +305,7 @@
           "datasource": {
             "uid": "prometheus"
           },
-          "expr": "sum by(path) (http_requests_total{job='clients_api'})",
+          "expr": "sum by(path) (http_requests_total{job='gateway'})",
           "legendFormat": "{{path}}",
           "refId": "A"
         }
@@ -325,13 +325,13 @@
           "type": "prometheus",
           "uid": "PBFA97CFB590B2093"
         },
-        "definition": "query_result(go_sched_gomaxprocs_threads{job=\"clients_api\"})",
+        "definition": "query_result(go_sched_gomaxprocs_threads{job=\"gateway\"})",
         "hide": 2,
-        "name": "max_procs_clients_api",
+        "name": "max_procs_gateway",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(go_sched_gomaxprocs_threads{job=\"clients_api\"})",
+          "query": "query_result(go_sched_gomaxprocs_threads{job=\"gateway\"})",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -346,6 +346,6 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Clients API Overview",
-  "uid": "clients-api-overview"
+  "title": "Gateway Overview",
+  "uid": "gateway-overview"
 }
