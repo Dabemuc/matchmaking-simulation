@@ -48,6 +48,7 @@ func FetchStore() error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("fetching store failed with status code: %d", resp.StatusCode)
