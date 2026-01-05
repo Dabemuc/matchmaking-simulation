@@ -71,7 +71,7 @@ func (p *Pool) Init(ctx context.Context) {
 
 					atomic.AddInt64(&p.playerCnt, 1)
 
-					go player.run(playerCtx, p.idle)
+					go player.run(playerCtx, p.idle, p)
 				}
 				tickDuration.WithLabelValues("pool_creation").Observe(time.Since(tickStart).Seconds())
 
@@ -83,7 +83,15 @@ func (p *Pool) Init(ctx context.Context) {
 	}()
 }
 
-func (p *Pool) ExecuteScenario(ctx context.Context, s Scenario) error {
+func (p *Pool) ExecuteScenario(s Scenario) {
+	p.doExecuteScenario(context.Background(), s)
+}
+
+func (p *Pool) DoExecuteScenario(ctx context.Context, s Scenario) error {
+	return p.doExecuteScenario(ctx, s)
+}
+
+func (p *Pool) doExecuteScenario(ctx context.Context, s Scenario) error {
 	waitStart := time.Now()
 
 	// Non-blocking attempt first for speed

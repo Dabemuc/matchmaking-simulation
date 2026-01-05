@@ -69,7 +69,7 @@ func (c *Compositor) run(ctx context.Context) {
 							dispatchCtx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 
 							scenarioAttemptedTotal.WithLabelValues(scen.Name()).Inc()
-							err := c.pool.ExecuteScenario(dispatchCtx, scen)
+							err := c.pool.DoExecuteScenario(dispatchCtx, scen)
 
 							if err != nil {
 								if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, ErrNoPlayerAvailable) {

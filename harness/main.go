@@ -42,8 +42,8 @@ func main() {
 	// Scenarios defined as executions per second PER PLAYER
 	// Matchmaking: Average of 1 minute between attempts
 	compositor.AddScenario(pool.MatchmakingScenario{}, 1.0/60.0)
-	// Store Purchase: Average of 2 hours between purchases
-	compositor.AddScenario(pool.StorePurchaseScenario{}, 1.0/7200.0)
+	// Fetch Store: Average of 2 hours between checking the store
+	compositor.AddScenario(pool.FetchStoreScenario{}, 1.0/7200.0)
 	// Logout: Average session length of 15 minutes
 	compositor.AddScenario(pool.LogoutScenario{}, 1.0/900.0)
 	compositor.Start(ctx)

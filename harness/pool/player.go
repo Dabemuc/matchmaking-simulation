@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"sync/atomic"
 	"time"
 )
@@ -25,7 +26,7 @@ func newPlayer(id int, playerCnt *int64, cancel context.CancelFunc) *Player {
 	}
 }
 
-func (p *Player) run(ctx context.Context, idle chan *Player) {
+func (p *Player) run(ctx context.Context, idle chan *Player, emitter ScenarioEmitter) {
 	// ---- PLAYER SHUTDOWN ----
 	defer func() {
 		atomic.AddInt64(p.playerCnt, -1)
@@ -34,7 +35,7 @@ func (p *Player) run(ctx context.Context, idle chan *Player) {
 	// Every player must login before becoming idle
 	login := LoginScenario{}
 	loginStart := time.Now()
-	if err := login.Run(ctx, p); err != nil {
+	if err := login.Run(ctx, p, emitter); err != nil {
 		fmt.Printf("[player %d] login failed: %v\n", p.id, err)
 		playerLoginTotal.WithLabelValues("failure").Inc()
 		return
@@ -70,7 +71,8 @@ func (p *Player) run(ctx context.Context, idle chan *Player) {
 			scenarioStartedTotal.WithLabelValues(s.Name()).Inc()
 
 			scenarioStart := time.Now()
-			err := s.Run(ctx, p)
+			err := s.Run(ctx, p, emitter)
+			p.processFollowUpScenarios(s, emitter)
 			duration := time.Since(scenarioStart).Seconds()
 			scenarioDuration.WithLabelValues(s.Name()).Observe(duration)
 
@@ -89,6 +91,19 @@ func (p *Player) run(ctx context.Context, idle chan *Player) {
 		case <-ctx.Done():
 			contextCancellationsTotal.WithLabelValues("player_scenario_wait").Inc()
 			return
+		}
+	}
+}
+
+func (p *Player) processFollowUpScenarios(s Scenario, emitter ScenarioEmitter) {
+	followUpScenarios := s.GetFollowUpScenarios()
+	if followUpScenarios == nil {
+		return
+	}
+
+	for _, followUp := range followUpScenarios {
+		if rand.Float64() < followUp.Chance {
+			emitter.ExecuteScenario(followUp.Scenario)
 		}
 	}
 }
