@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"gateway/gateway"
+	"time"
 )
 
 var (
@@ -32,8 +33,16 @@ func main() {
 	http.HandleFunc("/store/offers", instrument(gateway.StoreOffersHandler))
 	http.HandleFunc("/store/purchase", instrument(gateway.StorePurchaseHandler))
 
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      nil, // use default ServeMux
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  30 * time.Second,
+	}
+
 	fmt.Println("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -11,6 +11,7 @@ import (
 */
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	log.Printf("received request on %s from %s", r.URL.Path, r.RemoteAddr)
 
 	if r.Method != http.MethodPost {
@@ -34,6 +35,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func StoreOffersHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	log.Printf("received request on %s from %s", r.URL.Path, r.RemoteAddr)
 
 	if r.Method != http.MethodGet {
@@ -93,6 +95,7 @@ func StoreOffersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func StorePurchaseHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 	log.Printf("received request on %s from %s", r.URL.Path, r.RemoteAddr)
 
 	if r.Method != http.MethodPost {

@@ -33,19 +33,19 @@ func main() {
 
 	// CONFIGURATION:
 	targetPlayers := 10000
-	creationRate := 10 * time.Millisecond
+	creationRate := 2 * time.Millisecond
 
 	p := pool.New(creationRate, targetPlayers)
 	p.Init(ctx)
 
 	compositor := pool.NewCompositor(p)
-	// Scenarios defined as executions per second PER PLAYER
-	// Matchmaking: Average of 1 minute between attempts
-	compositor.AddScenario(pool.MatchmakingScenario{}, 1.0/60.0)
-	// Fetch Store: Average of 2 hours between checking the store
-	compositor.AddScenario(pool.FetchStoreScenario{}, 1.0/7200.0)
-	// Logout: Average session length of 15 minutes
-	compositor.AddScenario(pool.LogoutScenario{}, 1.0/900.0)
+	// Scenarios defined as executions per idle second PER PLAYER
+	// Matchmaking: Average of 5 mins between attempts
+	compositor.AddScenario(pool.MatchmakingScenario{}, 1.0/(60.0*5))
+	// Fetch Store: Average of 45 mins between checking the store
+	compositor.AddScenario(pool.FetchStoreScenario{}, 1.0/(60.0*45))
+	// Logout: Average session length of 30 mins
+	compositor.AddScenario(pool.LogoutScenario{}, 1.0/(60.0*30))
 	compositor.Start(ctx)
 
 	// Wait for a signal to stop

@@ -29,7 +29,7 @@
       "title": "Goroutines & Threads",
       "type": "timeseries",
       "interval": "0.25s",
-      "description": "Displays the number of active Go routines and OS-level threads. A steady upward trend in Goroutines indicates a leak. A spike in OS Threads suggests the harness is hitting blocking I/O (system calls/network) rather than Go-level concurrency limits.",
+      "description": "Displays the number of active Go routines and OS-level threads. A steady upward trend in Goroutines indicates a leak. A spike in OS Threads suggests the service is hitting blocking I/O (system calls/network) rather than Go-level concurrency limits.",
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 1 },
       "options": { "tooltip": { "mode": "multi", "sort": "none" } },
       "targets": [
