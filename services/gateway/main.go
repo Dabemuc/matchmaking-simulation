@@ -5,12 +5,12 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"gateway/gateway"
-	"time"
+	"gateway/handlers"
 )
 
 var (
@@ -29,9 +29,9 @@ func init() {
 
 func main() {
 	http.Handle("/metrics", promhttp.Handler())
-	http.HandleFunc("/login", instrument(gateway.LoginHandler))
-	http.HandleFunc("/store/offers", instrument(gateway.StoreOffersHandler))
-	http.HandleFunc("/store/purchase", instrument(gateway.StorePurchaseHandler))
+	http.HandleFunc("/login", instrument(handlers.LoginHandler))
+	http.HandleFunc("/store/offers", instrument(handlers.StoreOffersHandler))
+	http.HandleFunc("/store/purchase", instrument(handlers.StorePurchaseHandler))
 
 	server := &http.Server{
 		Addr:         ":8080",
