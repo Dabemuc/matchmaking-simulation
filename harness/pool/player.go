@@ -9,11 +9,18 @@ import (
 	"time"
 )
 
+type MatchInfo struct {
+	MatchID   string `json:"match_id"`
+	GameID    string `json:"game_id"`
+	ServerURL string `json:"server_url"`
+}
+
 type Player struct {
 	id        int
 	scenario  chan Scenario
 	playerCnt *int64
 	cancel    context.CancelFunc
+	matchInfo *MatchInfo
 }
 
 func newPlayer(id int, playerCnt *int64, cancel context.CancelFunc) *Player {

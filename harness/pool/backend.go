@@ -2,12 +2,16 @@ package pool
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand/v2"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 func getGatewayURL() string {
@@ -81,25 +85,69 @@ func StorePurchase(id int) error {
 	return nil
 }
 
-func Matchmaking(id int) error {
+func Matchmaking(id int) (*MatchInfo, error) {
 	url := getGatewayURL() + "/matchmaking"
 
 	requestBody, err := json.Marshal(map[string]string{
 		"id": strconv.Itoa(id),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(requestBody))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("matchmaking failed with status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("matchmaking failed with status code: %d", resp.StatusCode)
 	}
 
-	return nil
+	var info MatchInfo
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+		return nil, err
+	}
+
+	return &info, nil
+}
+
+func ConnectToGameServer(ctx context.Context, info *MatchInfo) error {
+	url := fmt.Sprintf("%s?game_id=%s", info.ServerURL, info.GameID)
+
+	c, _, err := websocket.DefaultDialer.DialContext(ctx, url, nil)
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+		for {
+			_, _, err := c.ReadMessage()
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			return ctx.Err()
+		case <-done:
+			return nil
+		case <-ticker.C:
+			if err := c.WriteMessage(websocket.TextMessage, []byte("game_state_update")); err != nil {
+				return err
+			}
+		}
+	}
 }

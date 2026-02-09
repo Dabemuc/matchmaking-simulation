@@ -33,6 +33,7 @@ func main() {
 	http.HandleFunc("/store/offers", instrument(handlers.StoreOffersHandler))
 	http.HandleFunc("/store/purchase", instrument(handlers.StorePurchaseHandler))
 	http.HandleFunc("/matchmaking", instrument(handlers.MatchmakingHandler))
+	http.HandleFunc("/game/connect", handlers.GameHandler)
 
 	server := &http.Server{
 		Addr:         ":8080",

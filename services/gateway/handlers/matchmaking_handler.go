@@ -6,6 +6,8 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func MatchmakingHandler(w http.ResponseWriter, r *http.Request) {
@@ -38,8 +40,10 @@ func MatchmakingHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{
-			"status":   "match_found",
-			"match_id": "mock_match_id",
+			"status":     "match_found",
+			"match_id":   uuid.New().String(),
+			"game_id":    uuid.New().String(),
+			"server_url": "ws://" + r.Host + "/game/connect",
 		})
 	case <-r.Context().Done():
 		log.Printf("matchmaking cancelled for user: %s", req.Id)
