@@ -80,3 +80,26 @@ func StorePurchase(id int) error {
 
 	return nil
 }
+
+func Matchmaking(id int) error {
+	url := getGatewayURL() + "/matchmaking"
+
+	requestBody, err := json.Marshal(map[string]string{
+		"id": strconv.Itoa(id),
+	})
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(requestBody))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("matchmaking failed with status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}

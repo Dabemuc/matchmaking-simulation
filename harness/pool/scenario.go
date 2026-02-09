@@ -40,8 +40,7 @@ type MatchmakingScenario struct{}
 
 func (MatchmakingScenario) Run(ctx context.Context, p *Player, e ScenarioEmitter) error {
 	fmt.Printf("[player %d] matchmaking\n", p.id)
-	// TODO: matchmaking calls
-	return sleepOrCancel(ctx, 500*time.Millisecond)
+	return Matchmaking(p.id)
 }
 
 func (MatchmakingScenario) Name() string {
