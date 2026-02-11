@@ -32,7 +32,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 
 	// CONFIGURATION:
-	targetPlayers := 10000
+	targetPlayers := 100
 	creationRate := 2 * time.Millisecond
 
 	p := pool.New(creationRate, targetPlayers)

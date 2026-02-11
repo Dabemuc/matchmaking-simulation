@@ -28,6 +28,20 @@ services:
           memory: 128M # limit memory
     environment:
       - GOMAXPROCS=1 # Limit Go runtime
+      - ORCHESTRATOR_HOSTNAME=game-orchestrator
+    depends_on:
+      - game-orchestrator
+    networks:
+      - monitoring
+
+  game-orchestrator:
+    build:
+      context: .
+      dockerfile: services/game-orchestrator/Dockerfile
+    container_name: game-orchestrator
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=""
     networks:
       - monitoring
 

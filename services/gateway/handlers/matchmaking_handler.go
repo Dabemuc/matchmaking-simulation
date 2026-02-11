@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"gateway/metrics"
 	"log"
 	"math/rand/v2"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,13 +44,49 @@ func MatchmakingHandler(w http.ResponseWriter, r *http.Request) {
 	select {
 	case <-time.After(delay):
 		log.Printf("match found for user: %s", req.Id)
+
+		orchestratorHost := os.Getenv("ORCHESTRATOR_HOSTNAME")
+		if orchestratorHost == "" {
+			orchestratorHost = "game-orchestrator"
+		}
+		orchestratorURL := fmt.Sprintf("http://%s:8080/create", orchestratorHost)
+
+		createReq := map[string]string{
+			"game_id": uuid.New().String(),
+		}
+		reqBody, _ := json.Marshal(createReq)
+
+		resp, err := http.Post(orchestratorURL, "application/json", bytes.NewBuffer(reqBody))
+		if err != nil {
+			log.Printf("failed to request game creation: %v", err)
+			http.Error(w, "Matchmaking failed", http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("game creation failed with status: %d", resp.StatusCode)
+			http.Error(w, "Matchmaking failed", http.StatusInternalServerError)
+			return
+		}
+
+		var gameInfo struct {
+			GameID    string `json:"game_id"`
+			ServerURL string `json:"server_url"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&gameInfo); err != nil {
+			log.Printf("failed to decode game info: %v", err)
+			http.Error(w, "Matchmaking failed", http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":     "match_found",
 			"match_id":   uuid.New().String(),
-			"game_id":    uuid.New().String(),
-			"server_url": "ws://" + r.Host + "/game/connect",
+			"game_id":    gameInfo.GameID,
+			"server_url": gameInfo.ServerURL,
 		})
 	case <-r.Context().Done():
 		log.Printf("matchmaking cancelled for user: %s", req.Id)
