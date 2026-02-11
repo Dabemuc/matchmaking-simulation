@@ -11,13 +11,51 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 )
 
 var (
 	rdb             *redis.Client
 	orchestratorURL string
+
+	// Metrics
+	queueTime = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "matchmaking_queue_time_seconds",
+		Help:    "Time spent in queue by players",
+		Buckets: prometheus.DefBuckets,
+	})
+	queueSize = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "matchmaking_queue_size",
+		Help: "Current number of players in queue",
+	})
+	matchesCreated = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "matchmaking_matches_created_total",
+		Help: "Total number of matches created",
+	})
+	ticketsCreated = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "matchmaking_tickets_created_total",
+		Help: "Total number of matchmaking tickets created",
+	})
+	ticketsMatched = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "matchmaking_tickets_matched_total",
+		Help: "Total number of tickets matched",
+	})
+	allocationLatency = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "orchestrator_allocation_latency_seconds",
+		Help:    "Time taken to allocate a game server",
+		Buckets: prometheus.DefBuckets,
+	})
+	allocationFailures = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "orchestrator_allocation_failures_total",
+		Help: "Total number of game server allocation failures",
+	})
 )
+
+func init() {
+	prometheus.MustRegister(queueTime, queueSize, matchesCreated, ticketsCreated, ticketsMatched, allocationLatency, allocationFailures)
+}
 
 const (
 	ticketTTL = 10 * time.Minute
@@ -83,6 +121,7 @@ func main() {
 	go matchmakerWorker()
 
 	// Setup Routes
+	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/matchmaking/join", handleJoin)
 	http.HandleFunc("/matchmaking/status", handleStatus)
 	http.HandleFunc("/matchmaking/cancel", handleCancel) // Basic robustness
@@ -140,6 +179,11 @@ func handleJoin(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Redis error: %v", err)
 		http.Error(w, "Failed to queue", http.StatusInternalServerError)
 		return
+	}
+
+	ticketsCreated.Inc()
+	if size, err := rdb.LLen(ctx, queueKey).Result(); err == nil {
+		queueSize.Set(float64(size))
 	}
 
 	resp := JoinResponse{
@@ -240,6 +284,10 @@ func handleCancel(w http.ResponseWriter, r *http.Request) {
 		// Remove from queue
 		rdb.LRem(ctx, queueKey, 0, ticketID)
 		rdb.Set(ctx, "ticket:"+ticketID, updatedJSON, ticketTTL)
+
+		if size, err := rdb.LLen(ctx, queueKey).Result(); err == nil {
+			queueSize.Set(float64(size))
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -290,6 +338,10 @@ func matchmakerWorker() {
 		}
 
 		if len(ticketIDs) > 0 {
+			if size, err := rdb.LLen(ctx, queueKey).Result(); err == nil {
+				queueSize.Set(float64(size))
+			}
+
 			log.Printf("Found %d players, creating match...", len(ticketIDs))
 			if err := createMatch(ctx, ticketIDs); err != nil {
 				log.Printf("Failed to create match: %v", err)
@@ -304,10 +356,16 @@ func createMatch(ctx context.Context, ticketIDs []string) error {
 	matchID := uuid.New().String()
 
 	// Call Orchestrator to allocate server
+	start := time.Now()
 	serverInfo, err := allocateServer()
+	allocationLatency.Observe(time.Since(start).Seconds())
 	if err != nil {
+		allocationFailures.Inc()
 		return fmt.Errorf("allocating server: %w", err)
 	}
+
+	matchesCreated.Inc()
+	ticketsMatched.Add(float64(len(ticketIDs)))
 
 	// Fetch player IDs from tickets to store in match object
 	var playerIDs []string
@@ -317,6 +375,7 @@ func createMatch(ctx context.Context, ticketIDs []string) error {
 			var t Ticket
 			if json.Unmarshal([]byte(val), &t) == nil {
 				playerIDs = append(playerIDs, t.PlayerID)
+				queueTime.Observe(time.Since(t.CreatedAt).Seconds())
 			}
 		}
 	}
