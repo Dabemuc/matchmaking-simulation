@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"gateway/metrics"
 	"log"
 	"math/rand/v2"
 	"net"
@@ -25,6 +26,9 @@ func GameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
+
+	metrics.OngoingMatches.Inc()
+	defer metrics.OngoingMatches.Dec()
 
 	gameID := r.URL.Query().Get("game_id")
 	// Simulate game duration determined by server

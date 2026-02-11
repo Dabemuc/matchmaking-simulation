@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"gateway/metrics"
 	"log"
 	"math/rand/v2"
 	"net/http"
@@ -29,6 +30,9 @@ func MatchmakingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("received matchmaking request for user: %s", req.Id)
+
+	metrics.PlayersInMatchmaking.Inc()
+	defer metrics.PlayersInMatchmaking.Dec()
 
 	// Simulate matchmaking delay between 1 and 5 seconds
 	// This holds the connection open to simulate a long-running process
