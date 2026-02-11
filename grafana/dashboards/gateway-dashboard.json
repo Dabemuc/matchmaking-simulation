@@ -130,10 +130,7 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [
-                    5,
-                    5
-                  ],
+                  "dash": [5, 5],
                   "fill": "solid"
                 }
               }
@@ -390,38 +387,23 @@
       "id": 100
     },
     {
-      "title": "Players in Matchmaking",
-      "type": "stat",
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "PBFA97CFB590B2093"
       },
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 21
-      },
-      "id": 101,
-      "targets": [
-        {
-          "expr": "gateway_players_in_matchmaking",
-          "legendFormat": "__auto",
-          "refId": "A"
-        }
-      ],
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
+          "mappings": [],
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "orange",
@@ -433,47 +415,41 @@
               }
             ]
           }
-        }
-      }
-    },
-    {
-      "title": "Ongoing Matches",
-      "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 6,
         "w": 12,
-        "x": 12,
-        "y": 21
+        "x": 0,
+        "y": 33
       },
-      "id": 102,
+      "id": 101,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "expr": "gateway_ongoing_matches",
+          "expr": "gateway_players_in_matchmaking",
           "legendFormat": "__auto",
           "refId": "A"
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "blue",
-                "value": null
-              }
-            ]
-          }
-        }
-      }
+      "title": "Players in Matchmaking",
+      "type": "stat"
     }
   ],
   "preload": false,
