@@ -28,6 +28,166 @@
         "x": 0,
         "y": 0
       },
+      "id": 200,
+      "title": "Vitals",
+      "type": "row"
+    },
+    {
+      "description": "Displays the number of active Go routines and OS-level threads. A steady upward trend in Goroutines indicates a leak. A spike in OS Threads suggests the service is hitting blocking I/O (system calls/network) rather than Go-level concurrency limits.",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0
+        }
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 201,
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_goroutines{job=\"matchmaking\"}",
+          "legendFormat": "Goroutines"
+        },
+        {
+          "expr": "go_threads{job=\"matchmaking\"}",
+          "legendFormat": "OS Threads"
+        }
+      ],
+      "title": "Goroutines & Threads",
+      "type": "timeseries",
+      "interval": "0.25s"
+    },
+    {
+      "description": "Historical CPU usage relative to the GOMAXPROCS limit. If the line crosses the Hard Limit, the Go runtime is fully saturated.",
+      "fieldConfig": {
+        "defaults": {
+          "max": 1.2,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hard Limit (${max_procs_matchmaking} Cores)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    5,
+                    5
+                  ],
+                  "fill": "solid"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 202,
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"matchmaking\"}[1m]) / scalar(go_sched_gomaxprocs_threads{job=\"matchmaking\"})",
+          "legendFormat": "Actual Usage (Ratio)"
+        },
+        {
+          "expr": "vector(1)",
+          "legendFormat": "Hard Limit (${max_procs_matchmaking} Cores)"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "interval": "0.25s"
+    },
+    {
+      "description": "Compares Heap Alloc (Go managed) vs Resident Set Size (OS managed). A widening gap suggests memory fragmentation or non-heap overhead.",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 203,
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_memstats_heap_alloc_bytes{job=\"matchmaking\"}",
+          "legendFormat": "Heap Alloc"
+        },
+        {
+          "expr": "process_resident_memory_bytes{job=\"matchmaking\"}",
+          "legendFormat": "Total RSS"
+        }
+      ],
+      "title": "Memory",
+      "type": "timeseries",
+      "interval": "0.25s"
+    },
+    {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
       "id": 1,
       "title": "Queue Status",
       "type": "row"
@@ -98,7 +258,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 1
+        "y": 16
       },
       "id": 2,
       "options": {
@@ -125,7 +285,8 @@
         }
       ],
       "title": "Queue Size",
-      "type": "timeseries"
+      "type": "timeseries",
+      "interval": "0.25s"
     },
     {
       "datasource": {
@@ -193,7 +354,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 1
+        "y": 16
       },
       "id": 3,
       "options": {
@@ -229,14 +390,15 @@
         }
       ],
       "title": "Throughput (Tickets)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "interval": "0.25s"
     },
     {
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 24
       },
       "id": 4,
       "title": "Performance",
@@ -308,7 +470,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 25
       },
       "id": 5,
       "options": {
@@ -344,7 +506,8 @@
         }
       ],
       "title": "Matchmaking Latency",
-      "type": "timeseries"
+      "type": "timeseries",
+      "interval": "0.25s"
     },
     {
       "datasource": {
@@ -412,7 +575,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 25
       },
       "id": 6,
       "options": {
@@ -439,14 +602,15 @@
         }
       ],
       "title": "Match Creation Rate",
-      "type": "timeseries"
+      "type": "timeseries",
+      "interval": "0.25s"
     },
     {
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 33
       },
       "id": 7,
       "title": "Orchestrator Interactions",
@@ -518,7 +682,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 19
+        "y": 34
       },
       "id": 8,
       "options": {
@@ -554,7 +718,8 @@
         }
       ],
       "title": "Orchestrator Allocation Latency",
-      "type": "timeseries"
+      "type": "timeseries",
+      "interval": "0.25s"
     },
     {
       "datasource": {
@@ -622,7 +787,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 34
       },
       "id": 9,
       "options": {
@@ -649,14 +814,34 @@
         }
       ],
       "title": "Allocation Failures",
-      "type": "timeseries"
+      "type": "timeseries",
+      "interval": "0.25s"
     }
   ],
   "refresh": "5s",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "definition": "query_result(go_sched_gomaxprocs_threads{job=\"matchmaking\"})",
+        "hide": 2,
+        "name": "max_procs_matchmaking",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(go_sched_gomaxprocs_threads{job=\"matchmaking\"})",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "/\\} (\\d+)/",
+        "type": "query"
+      }
+    ]
   },
   "time": {
     "from": "now-5m",

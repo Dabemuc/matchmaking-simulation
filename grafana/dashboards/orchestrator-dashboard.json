@@ -21,6 +21,166 @@
   "links": [],
   "panels": [
     {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 200,
+      "title": "Vitals",
+      "type": "row"
+    },
+    {
+      "description": "Displays the number of active Go routines and OS-level threads. A steady upward trend in Goroutines indicates a leak. A spike in OS Threads suggests the service is hitting blocking I/O (system calls/network) rather than Go-level concurrency limits.",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0
+        }
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 201,
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_goroutines{job=\"game-orchestrator\"}",
+          "legendFormat": "Goroutines"
+        },
+        {
+          "expr": "go_threads{job=\"game-orchestrator\"}",
+          "legendFormat": "OS Threads"
+        }
+      ],
+      "title": "Goroutines & Threads",
+      "type": "timeseries",
+      "interval": "0.25s"
+    },
+    {
+      "description": "Historical CPU usage relative to the GOMAXPROCS limit. If the line crosses the Hard Limit, the Go runtime is fully saturated.",
+      "fieldConfig": {
+        "defaults": {
+          "max": 1.2,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hard Limit (${max_procs_orchestrator} Cores)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    5,
+                    5
+                  ],
+                  "fill": "solid"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 202,
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"game-orchestrator\"}[1m]) / scalar(go_sched_gomaxprocs_threads{job=\"game-orchestrator\"})",
+          "legendFormat": "Actual Usage (Ratio)"
+        },
+        {
+          "expr": "vector(1)",
+          "legendFormat": "Hard Limit (${max_procs_orchestrator} Cores)"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "interval": "0.25s"
+    },
+    {
+      "description": "Compares Heap Alloc (Go managed) vs Resident Set Size (OS managed). A widening gap suggests memory fragmentation or non-heap overhead.",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 203,
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "go_memstats_heap_alloc_bytes{job=\"game-orchestrator\"}",
+          "legendFormat": "Heap Alloc"
+        },
+        {
+          "expr": "process_resident_memory_bytes{job=\"game-orchestrator\"}",
+          "legendFormat": "Total RSS"
+        }
+      ],
+      "title": "Memory",
+      "type": "timeseries",
+      "interval": "0.25s"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
@@ -48,7 +208,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 15
       },
       "id": 102,
       "options": {
@@ -58,7 +218,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -75,13 +237,36 @@
         }
       ],
       "title": "Ongoing Matches",
-      "type": "stat"
+      "type": "stat",
+      "interval": "0.25s"
     }
   ],
   "preload": false,
   "refresh": "5s",
   "schemaVersion": 42,
   "tags": [],
+  "templating": {
+    "list": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "definition": "query_result(go_sched_gomaxprocs_threads{job=\"game-orchestrator\"})",
+        "hide": 2,
+        "name": "max_procs_orchestrator",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(go_sched_gomaxprocs_threads{job=\"game-orchestrator\"})",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "/\\} (\\d+)/",
+        "type": "query"
+      }
+    ]
+  },
   "time": {
     "from": "now-5m",
     "to": "now"
