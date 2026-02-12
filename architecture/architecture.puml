@@ -3,6 +3,8 @@ skinparam defaultFontName "Segoe UI"
 skinparam roundcorner 10
 skinparam shadowing true
 skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 60
 
 skinparam component {
   BackgroundColor #FDFDFD
@@ -28,76 +30,94 @@ skinparam note {
 
 title Matchmaking Simulation - System Architecture
 
+' --- Top: Observability ---
+package "Observability" {
+    component "Grafana" as Grafana <<Visualization>>
+    component "Prometheus" as Prometheus <<Metrics DB>>
+    Grafana -down-> Prometheus : "Query"
+}
+
+' --- Left: Load Generation ---
 package "Load Generation (Harness)" {
     component "Compositor" as Compositor <<Logic>>
     component "Player Pool" as Pool <<Manager>>
     collections "Player\nGoroutines" as Players <<Simulation>>
 
-    Compositor --> Pool : "Calculates rates\n& dispatches"
-    Pool --> Players : "Spawns & Monitors"
+    Compositor -down-> Pool : "Calculates rates\n& dispatches"
+    Pool -down-> Players : "Spawns & Monitors"
 }
 
-component "Gateway" as Gateway <<Reverse Proxy>> {
-}
+' --- Center: Gateway ---
+component "Gateway" as Gateway <<Reverse Proxy>>
 
+' --- Right: Matchmaking Domain ---
 package "Matchmaking Domain" {
     component "Matchmaking API" as MatchAPI <<Service>>
     component "Matchmaker\nWorker" as MatchWorker <<Background Process>>
+
+    MatchAPI -[hidden]down- MatchWorker
 }
 
+' --- Far Right: Redis ---
+database "Redis" as Redis {
+    [Ticket Hash] as R_Ticket
+    [Queue List] as R_Queue
+    [Match Hash] as R_Match
+
+    R_Ticket -[hidden]down- R_Queue
+    R_Queue -[hidden]down- R_Match
+}
+
+' --- Bottom Center: Game Infrastructure ---
 package "Game Infrastructure" {
     component "Game Orchestrator" as Orchestrator <<Service>>
     collections "Game Server\nContainers" as GameServers <<Ephemeral>>
+
+    Orchestrator -down-> GameServers : "Docker API\n(Run Container)"
 }
 
-database "Redis" as Redis {
-    [Queue List] as R_Queue
-    [Ticket Hash] as R_Ticket
-    [Match Hash] as R_Match
-}
+' --- Alignment / Layout Helpers ---
 
-package "Observability" {
-    component "Prometheus" as Prometheus <<Metrics DB>>
-    component "Grafana" as Grafana <<Visualization>>
-}
+' Vertical alignment for Game Infrastructure
+Gateway -[hidden]down- Orchestrator
 
-' Traffic Flows
-Players -down-> Gateway : "REST API\n(Join, Status)"
-Gateway -down-> MatchAPI : "Forward Request"
+' --- Connections ---
 
-' Matchmaking Flows
+' Load Gen Traffic
+Players -right-> Gateway : "REST API\n(Join, Status)"
+Gateway -right-> MatchAPI : "Forward Request"
+
+' Matchmaking API -> Redis
 MatchAPI -right-> R_Ticket : "Create Ticket\n(Pending)"
 MatchAPI -right-> R_Queue : "Push Ticket ID"
 
-MatchWorker ..> R_Queue : "Poll (Lua Batch)"
-MatchWorker ..> R_Ticket : "Fetch/Update"
-MatchWorker -down-> Orchestrator : "POST /create\n(Provision Server)"
+' MatchWorker Logic
+MatchWorker .right.> R_Queue : "Poll (Lua Batch)"
+MatchWorker .up.> R_Ticket : "Fetch/Update"
+MatchWorker -right-> R_Match : "Create Match Record"
+MatchWorker -left-> Orchestrator : "POST /create\n(Provision Server)"
 
-' Orchestration Flows
-Orchestrator --> GameServers : "Docker API\n(Run Container)"
-Orchestrator -right-> MatchWorker : "Return Connection Info"
-
-MatchWorker --> R_Match : "Create Match Record"
-MatchWorker --> R_Ticket : "Update (Matched)"
-
-' Game Play Flows
-Players -down-> Orchestrator : "WS Connect\n(via Proxy)"
+' Orchestrator
+Orchestrator .right.> MatchWorker : "Return Connection Info"
 Orchestrator -down-> GameServers : "Proxy Traffic"
 
-' Monitoring Flows
-Prometheus ..> Gateway : "Scrape /metrics"
-Prometheus ..> MatchAPI : "Scrape /metrics"
-Prometheus ..> Orchestrator : "Scrape /metrics"
-Prometheus ..> "Load Generation (Harness)" : "Scrape /metrics" 
-Grafana ..> Prometheus : "Query"
+' Player -> Game Connection
+Players -down-> Orchestrator : "WS Connect\n(via Proxy)"
 
-note left of Compositor
+' Observability Scrapes
+Prometheus .down.> Gateway : "Scrape /metrics"
+Prometheus .down.> MatchAPI : "Scrape /metrics"
+Prometheus .down.> Orchestrator : "Scrape /metrics"
+Prometheus .left.> Compositor : "Scrape /metrics"
+
+' Notes
+note right of Compositor
   <b>Compositor</b>
   Controls simulation pacing
   by assigning scenarios per second.
 end note
 
-note right of MatchWorker
+note bottom of MatchWorker
   <b>Worker Logic</b>
   1. Pop batch from Redis
   2. Group players (FIFO)
