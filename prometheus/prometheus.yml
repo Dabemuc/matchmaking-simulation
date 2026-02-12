@@ -9,3 +9,9 @@ scrape_configs:
   - job_name: "gateway"
     static_configs:
       - targets: ["gateway:8080"]
+  - job_name: "game-orchestrator"
+    static_configs:
+      - targets: ["game-orchestrator:8080"]
+  - job_name: "matchmaking"
+    static_configs:
+      - targets: ["matchmaking:8081"]

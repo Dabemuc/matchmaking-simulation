@@ -40,7 +40,12 @@ type MatchmakingScenario struct{}
 
 func (MatchmakingScenario) Run(ctx context.Context, p *Player, e ScenarioEmitter) error {
 	fmt.Printf("[player %d] matchmaking\n", p.id)
-	return Matchmaking(p.id)
+	info, err := Matchmaking(p.id)
+	if err != nil {
+		return err
+	}
+	p.matchInfo = info
+	return nil
 }
 
 func (MatchmakingScenario) Name() string {
@@ -48,6 +53,29 @@ func (MatchmakingScenario) Name() string {
 }
 
 func (MatchmakingScenario) GetFollowUpScenarios() []FollowUpScenario {
+	return []FollowUpScenario{
+		{
+			Scenario: InGameScenario{},
+			Chance:   1.0,
+		},
+	}
+}
+
+type InGameScenario struct{}
+
+func (InGameScenario) Run(ctx context.Context, p *Player, e ScenarioEmitter) error {
+	fmt.Printf("[player %d] in game\n", p.id)
+	if p.matchInfo == nil {
+		return fmt.Errorf("player %d has no match info", p.id)
+	}
+	return ConnectToGameServer(ctx, p.matchInfo)
+}
+
+func (InGameScenario) Name() string {
+	return "in_game"
+}
+
+func (InGameScenario) GetFollowUpScenarios() []FollowUpScenario {
 	return nil
 }
 

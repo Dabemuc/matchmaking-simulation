@@ -23,15 +23,30 @@
     {
       "title": "Vitals",
       "type": "row",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "title": "Goroutines & Threads",
       "type": "timeseries",
       "interval": "0.25s",
       "description": "Displays the number of active Go routines and OS-level threads. A steady upward trend in Goroutines indicates a leak. A spike in OS Threads suggests the service is hitting blocking I/O (system calls/network) rather than Go-level concurrency limits.",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 1 },
-      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
       "targets": [
         {
           "expr": "go_goroutines{job=\"gateway\"}",
@@ -42,16 +57,28 @@
           "legendFormat": "OS Threads"
         }
       ],
-      "fieldConfig": { "defaults": { "min": 0 } }
+      "fieldConfig": {
+        "defaults": {
+          "min": 0
+        }
+      }
     },
     {
       "title": "CPU Usage",
       "type": "timeseries",
       "interval": "0.25s",
       "description": "Historical CPU usage relative to the GOMAXPROCS limit. If the line crosses the Hard Limit, the Go runtime is fully saturated.",
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 1 },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
       "options": {
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
         {
@@ -71,9 +98,18 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": 0 },
-              { "color": "orange", "value": 0.8 },
-              { "color": "red", "value": 1.0 }
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 1.0
+              }
             ]
           }
         },
@@ -86,11 +122,17 @@
             "properties": [
               {
                 "id": "color",
-                "value": { "fixedColor": "red", "mode": "fixed" }
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
               },
               {
                 "id": "custom.lineStyle",
-                "value": { "dash": [5, 5], "fill": "solid" }
+                "value": {
+                  "dash": [5, 5],
+                  "fill": "solid"
+                }
               }
             ]
           }
@@ -102,8 +144,18 @@
       "type": "timeseries",
       "interval": "0.25s",
       "description": "Compares Heap Alloc (Go managed) vs Resident Set Size (OS managed). A widening gap suggests memory fragmentation or non-heap overhead.",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 2 },
-      "options": { "tooltip": { "mode": "multi", "sort": "none" } },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 2
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
       "targets": [
         {
           "expr": "go_memstats_heap_alloc_bytes{job=\"gateway\"}",
@@ -114,12 +166,22 @@
           "legendFormat": "Total RSS"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 } }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0
+        }
+      }
     },
     {
       "title": "Request handling",
       "type": "row",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 3 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      }
     },
     {
       "datasource": {
@@ -312,6 +374,82 @@
       ],
       "title": "Total Requests by Endpoint",
       "type": "stat"
+    },
+    {
+      "title": "Matchmaking & Game State",
+      "type": "row",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 100
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 101,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "expr": "gateway_players_in_matchmaking",
+          "legendFormat": "__auto",
+          "refId": "A"
+        }
+      ],
+      "title": "Players in Matchmaking",
+      "type": "stat"
     }
   ],
   "preload": false,
@@ -346,6 +484,6 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Gateway Overview",
+  "title": "Gateway",
   "uid": "gateway-overview"
 }

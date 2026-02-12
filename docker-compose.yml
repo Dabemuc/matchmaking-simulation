@@ -28,6 +28,53 @@ services:
           memory: 128M # limit memory
     environment:
       - GOMAXPROCS=1 # Limit Go runtime
+      - ORCHESTRATOR_HOSTNAME=game-orchestrator
+      - MATCHMAKING_HOST=matchmaking
+      - MATCHMAKING_PORT=8081
+    depends_on:
+      - game-orchestrator
+      - matchmaking
+    networks:
+      - monitoring
+
+  game-orchestrator:
+    build:
+      context: .
+      dockerfile: services/game-orchestrator/Dockerfile
+    container_name: game-orchestrator
+    privileged: true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0" # Limit cores
+          memory: 512M # limit memory
+    environment:
+      - GOMAXPROCS=1 # Limit Go runtime
+      - DOCKER_TLS_CERTDIR=""
+    networks:
+      - monitoring
+
+  matchmaking:
+    build: services/matchmaking/
+    container_name: matchmaking
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 128M
+    environment:
+      - GOMAXPROCS=1 # Limit Go runtime
+      - REDIS_ADDR=redis:6379
+      - ORCHESTRATOR_URL=http://game-orchestrator:8080
+    depends_on:
+      - redis
+      - game-orchestrator
+    networks:
+      - monitoring
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
     networks:
       - monitoring
 
