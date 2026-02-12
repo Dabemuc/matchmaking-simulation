@@ -1,81 +1,115 @@
 @startuml
-skinparam componentStyle rectangle
+skinparam defaultFontName "Segoe UI"
+skinparam roundcorner 10
+skinparam shadowing true
+skinparam linetype ortho
 
-package "docker-compose network" {
-  component "Load Test Harness\n(go)" as LoadTest
-  component "Players API\n(go)" as PlayersAPI
-  component "Matchmaking Service\n(go)" as Matchmaking
-  component "Dind Provisioner\n(go) + Docker-in-Docker" as DindProv
-  component "Postgres DB" as Postgres
-
-  folder "Game Servers (provisioned in dind)" {
-    component "Game Server Container A" as GS1
-    component "Game Server Container B" as GS2
-  }
-
-  package "Telemetry & Monitoring" {
-    component "OpenTelemetry Collector" as OTel
-    component "Prometheus" as Prometheus
-    component "Grafana" as Grafana
-  }
+skinparam component {
+  BackgroundColor #FDFDFD
+  BorderColor #333333
+  ArrowColor #333333
+  FontSize 13
 }
 
-' Interactions
-LoadTest --> PlayersAPI : "REST API (player actions, polling)"
-PlayersAPI --> Postgres : "SQL (update player status, read/write)"
-Matchmaking --> Postgres : "SQL (query queued players)"
-Matchmaking --> DindProv : "Provision request (create game server)"
-DindProv --> GS1 : "docker run (containerized game servers)"
-DindProv --> Matchmaking : "Provision result (game server IP:port)"
-Matchmaking --> Postgres : "write match + server address"
-Matchmaking --> PlayersAPI : "notify players (push / update status)"
-LoadTest --> GS1 : "connect to game server (simulate player connection)"
-LoadTest --> GS2 : "connect to game server"
-PlayersAPI --> LoadTest : "responses / long-poll / websocket"
+skinparam database {
+  BackgroundColor #FDFDFD
+  BorderColor #333333
+}
 
-' Metrics flow
-LoadTest --> OTel : "OTLP metrics & traces (SDK)"
-PlayersAPI --> OTel : "OTLP metrics & traces"
-Matchmaking --> OTel : "OTLP metrics & traces"
-DindProv --> OTel : "OTLP metrics & traces"
-GS1 --> OTel : "OTLP metrics & traces"
-GS2 --> OTel : "OTLP metrics & traces"
-OTel --> Prometheus : "export / Prometheus receiver"
-Prometheus --> Grafana : "query metrics (dashboards)"
+skinparam package {
+  BackgroundColor #F5F5F5
+  BorderColor #666666
+}
 
-' Notes
-note right of OTel
-  Run the OpenTelemetry Collector in Docker.
-  Collector aggregates/batches and exports to Prometheus.
-  Services use OTLP (gRPC/HTTP) or StatsD to the Collector.
+skinparam note {
+  BackgroundColor #FFFACD
+  BorderColor #DAA520
+}
+
+title Matchmaking Simulation - System Architecture
+
+package "Load Generation (Harness)" {
+    component "Compositor" as Compositor <<Logic>>
+    component "Player Pool" as Pool <<Manager>>
+    collections "Player\nGoroutines" as Players <<Simulation>>
+
+    Compositor --> Pool : "Calculates rates\n& dispatches"
+    Pool --> Players : "Spawns & Monitors"
+}
+
+component "Gateway" as Gateway <<Reverse Proxy>> {
+}
+
+package "Matchmaking Domain" {
+    component "Matchmaking API" as MatchAPI <<Service>>
+    component "Matchmaker\nWorker" as MatchWorker <<Background Process>>
+}
+
+package "Game Infrastructure" {
+    component "Game Orchestrator" as Orchestrator <<Service>>
+    collections "Game Server\nContainers" as GameServers <<Ephemeral>>
+}
+
+database "Redis" as Redis {
+    [Queue List] as R_Queue
+    [Ticket Hash] as R_Ticket
+    [Match Hash] as R_Match
+}
+
+package "Observability" {
+    component "Prometheus" as Prometheus <<Metrics DB>>
+    component "Grafana" as Grafana <<Visualization>>
+}
+
+' Traffic Flows
+Players -down-> Gateway : "REST API\n(Join, Status)"
+Gateway -down-> MatchAPI : "Forward Request"
+
+' Matchmaking Flows
+MatchAPI -right-> R_Ticket : "Create Ticket\n(Pending)"
+MatchAPI -right-> R_Queue : "Push Ticket ID"
+
+MatchWorker ..> R_Queue : "Poll (Lua Batch)"
+MatchWorker ..> R_Ticket : "Fetch/Update"
+MatchWorker -down-> Orchestrator : "POST /create\n(Provision Server)"
+
+' Orchestration Flows
+Orchestrator --> GameServers : "Docker API\n(Run Container)"
+Orchestrator -right-> MatchWorker : "Return Connection Info"
+
+MatchWorker --> R_Match : "Create Match Record"
+MatchWorker --> R_Ticket : "Update (Matched)"
+
+' Game Play Flows
+Players -down-> Orchestrator : "WS Connect\n(via Proxy)"
+Orchestrator -down-> GameServers : "Proxy Traffic"
+
+' Monitoring Flows
+Prometheus ..> Gateway : "Scrape /metrics"
+Prometheus ..> MatchAPI : "Scrape /metrics"
+Prometheus ..> Orchestrator : "Scrape /metrics"
+Prometheus ..> "Load Generation (Harness)" : "Scrape /metrics" 
+Grafana ..> Prometheus : "Query"
+
+note left of Compositor
+  <b>Compositor</b>
+  Controls simulation pacing
+  by assigning scenarios per second.
 end note
 
-note right of DindProv
-  Dind Provisioner talks to Docker daemon inside the dind container.
-  It can use the Docker SDK for Go; provisioned game servers run as sibling containers.
+note right of MatchWorker
+  <b>Worker Logic</b>
+  1. Pop batch from Redis
+  2. Group players (FIFO)
+  3. Request server from Orchestrator
+  4. Update Redis state
 end note
 
-note left of Postgres
-  Use Postgres with a persistent volume.
-  Tables: players, parties, matches.
+note bottom of Orchestrator
+  <b>Privileged Mode</b>
+  Accesses Docker Socket to
+  spawn sibling containers
+  for Game Servers.
 end note
-
-note bottom of PlayersAPI
-  Use WebSocket or Server-Sent Events for push notifications to players,
-  or rely on player polling loops from the load test harness.
-end note
-
-' Represent docker-compose intent
-'component "docker-compose.yml" as Compose
-'Compose ..> LoadTest
-'Compose ..> PlayersAPI
-'Compose ..> Matchmaking
-'Compose ..> DindProv
-'Compose ..> Postgres
-'Compose ..> OTel
-'Compose ..> Prometheus
-'Compose ..> Grafana
-'Compose ..> GS1
-'Compose ..> GS2
 
 @enduml
