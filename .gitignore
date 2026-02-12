@@ -1,3 +1,6 @@
 .idea
 harness/harness
+services/game-orchestrator/game-orchestrator
+services/game-server/game-server
 services/gateway/gateway
+services/matchmaking/matchmaking
