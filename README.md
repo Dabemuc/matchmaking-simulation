@@ -14,38 +14,7 @@ This project tries to model the backend systems of multiplayer online games like
 
 The system is designed as a set of microservices communicating via REST and WebSockets, orchestrated by Docker Compose. It simulates the full lifecycle of a player: logging in, queuing for a match, being matched, and connecting to a dynamically provisioned game server.
 
-```mermaid
-graph TD
-    subgraph "Load Generation"
-        Compositor[Compositor Logic] --> Pool[Player Pool]
-        Pool -->|Spawns| Players((Player Goroutines))
-    end
-
-    subgraph "Gateway Layer"
-        Players -->|REST / WS| Gateway[API Gateway]
-    end
-
-    subgraph "Matchmaking Domain"
-        Gateway --> MatchAPI[Matchmaking API]
-        MatchAPI -->|Push Ticket| Redis[(Redis)]
-        MatchWorker[Matchmaker Worker] -->|Poll Batch| Redis
-        MatchWorker -->|Create Match| Redis
-    end
-
-    subgraph "Game Infrastructure"
-        MatchWorker -->|Provision| Orchestrator[Game Orchestrator]
-        Orchestrator -->|Docker API| GameServer[[Ephemeral Game Server]]
-        Players -.->|WS Connect| Orchestrator
-        Orchestrator -.->|Proxy| GameServer
-    end
-
-    subgraph "Observability"
-        Prometheus -->|Scrape /metrics| MatchAPI
-        Prometheus -->|Scrape /metrics| Orchestrator
-        Prometheus -->|Scrape /metrics| Gateway
-        Grafana -->|Query| Prometheus
-    end
-```
+![System Architecture](architecture/architecture.png)
 
 ## Key Engineering Features
 
