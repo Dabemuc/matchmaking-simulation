@@ -76,3 +76,6 @@ The system is built with "Observability First" principles.
 
 ## Inspiration
 This project was inspired by Riot Games' article on [Scalability and Load Testing for Valorant](https://technology.riotgames.com/news/scalability-and-load-testing-valorant), aiming to replicate the architectural complexities of shipping a global-scale competitive game.
+
+## Disclaimer
+Since the main focus for this project was the architectural challenge, alot of code and documentation was written using ai
